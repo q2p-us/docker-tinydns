@@ -1,0 +1,33 @@
+clone:
+  git:
+    image: plugins/git
+    recursive: true
+    submodule_update_remote: true
+pipeline:
+  build:
+    image: plugins/docker
+    repo: registry:80/tinydns
+    registry: registry:80
+    insecure: true
+    tags: latest
+  deploy:
+    image: docker
+    secrets: [ docker_username, docker_password ]
+    commands:
+      - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 127.0.0.1:5000
+      - docker stack deploy -c stacks/dns.yml dns --with-registry-auth
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  slack:
+    image: plugins/slack
+    webhook: https://hooks.slack.com/services/xxxxxxxxx/xxxxxxxxx/xxxxxxxxxxxxxxxxxx
+    channel: alerts
+    when:
+      status: [ success, failure ]
+services:
+  registry:
+    image: q2pus/socat
+    volumes:
+      - /tmp/socat.sock:/var/run/socat.sock:ro
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:80,fork", "UNIX-CONNECT:/var/run/socat.sock" ]
