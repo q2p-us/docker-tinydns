@@ -1,0 +1,4 @@
+[submodule "stacks"]
+	path = stacks
+	url = git@github.com:q2p-us/stacks.git
+	branch = master
